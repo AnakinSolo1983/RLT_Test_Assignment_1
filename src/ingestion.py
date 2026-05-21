@@ -1,29 +1,35 @@
-from Bio import Entrez
-import pandas as pd
-from tqdm import tqdm
+from Bio import Entrez  # Import Entrez.
+import pandas as pd     # Import pandas.
+from tqdm import tqdm   # Import tqdm.
 
-Entrez.email = "your_email@example.com"
+Entrez.email = "your_email@example.com" # Set the email.
 
+# Set the search terms:
 SEARCH_TERMS = [
     "Alzheimer therapeutic targets",
     "Alzheimer disease drug targets",
     "Alzheimer targets"
 ]
 
-
+# Search PubMed:
 def search_pubmed(query, retmax=20):
+    
+    # Search PubMed:
     handle = Entrez.esearch(
         db="pubmed",
         term=query,
         retmax=retmax
     )
 
-    record = Entrez.read(handle)
+    record = Entrez.read(handle) # Read the handle.
 
-    return record["IdList"]
+    return record["IdList"] # Return the list of IDs.
 
 
+# Fetch the article:
 def fetch_article(pmid):
+    
+    # Fetch the article:
     handle = Entrez.efetch(
         db="pubmed",
         id=pmid,
@@ -31,43 +37,52 @@ def fetch_article(pmid):
         retmode="text"
     )
 
-    text = handle.read()
+    text = handle.read() # Read the handle.
 
+    # Return the article:
     return {
         "paper_id": pmid,
         "text": text
     }
 
-
+# Build the dataset:
 def build_dataset():
-    all_articles = []
+    
+    all_articles = [] # Initialize the list of articles.
 
-    for term in SEARCH_TERMS:
-        ids = search_pubmed(term)
+    # Iterate through the search terms:
+    for term in SEARCH_TERMS: 
+        
+        ids = search_pubmed(term) # Search PubMed.
 
-        for pmid in tqdm(ids):
+        # Iterate through the IDs:
+        for pmid in tqdm(ids): 
 
             try:
-                article = fetch_article(pmid)
-                article["query"] = term
 
-                all_articles.append(article)
+                article = fetch_article(pmid) # Fetch the article.
+                article["query"] = term # Add the query.
+
+                all_articles.append(article) # Add the article to the list.
 
             except Exception as e:
+
                 print(f"Error for {pmid}: {e}")
 
-    df = pd.DataFrame(all_articles)
+    df = pd.DataFrame(all_articles) # Convert the list of articles to a DataFrame.
 
-    df.drop_duplicates(subset=["paper_id"], inplace=True)
+    df.drop_duplicates(subset=["paper_id"], inplace=True) # Drop duplicates.
 
+    # Save the DataFrame:
     df.to_csv(
         "data/raw/pubmed_articles.csv",
         index=False
     )
 
-    print(df.head())
-    print(f"Total articles: {len(df)}")
+    print(df.head()) # Print the head of the DataFrame.
+    print(f"Total articles: {len(df)}") # Print the total number of articles.
 
 
 if __name__ == "__main__":
-    build_dataset()
+    
+    build_dataset() # Build the dataset.
